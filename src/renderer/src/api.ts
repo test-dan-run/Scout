@@ -1,4 +1,4 @@
-import type { ChatMessage, Kind, RecordKinds } from '@shared/types'
+import type { ChatMessage, Company, Kind, RecordKinds } from '@shared/types'
 
 export interface GatewayStatus {
   ok: boolean
@@ -20,6 +20,11 @@ interface ScoutBridge {
   backup(): Promise<string | null>
   info(): Promise<{ dataPath: string; keychain: boolean; version: string }>
   openSource(url: string): Promise<void>
+  setApiKey(key: string): Promise<void>
+  hasApiKey(): Promise<boolean>
+  research(companyId: string): Promise<Company>
+  cancelResearch(companyId: string): Promise<void>
+  onResearchProgress(cb: (p: { companyId: string; message: string }) => void): () => void
 }
 
 declare global {

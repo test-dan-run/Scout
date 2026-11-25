@@ -81,7 +81,20 @@ export function draftWriteup(src: WriteupSources, existing?: Writeup): Writeup {
       const v = company.profile[f.key]!
       const label = v.sourceUrl ? `${v.sourceUrl}${v.checkedAt ? ` (checked ${v.checkedAt})` : ''}` : undefined
       return `- **${f.label}:** ${oneLine(v.value)}${sources.cite(label)}`
-    })
+    }),
+    ...((company.people ?? []).length
+      ? [
+          '',
+          '**Key people**',
+          '',
+          ...(company.people ?? []).map(
+            (p) =>
+              `- **${p.name}**${p.role ? `, ${p.role}` : ''}${p.background ? `: ${oneLine(p.background)}` : ''}${
+                p.notablePriorOrgs.length ? ` (previously ${p.notablePriorOrgs.join(', ')})` : ''
+              }${sources.cite(p.sourceUrl)}`
+          )
+        ]
+      : [])
   ].join('\n')
 
   // Rubric scores, with change since before the meeting.

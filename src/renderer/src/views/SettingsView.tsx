@@ -10,10 +10,13 @@ export function SettingsView() {
   const [status, setStatus] = useState<GatewayStatus | null>(null)
   const [info, setInfo] = useState<{ dataPath: string; keychain: boolean; version: string } | null>(null)
   const [backupMsg, setBackupMsg] = useState<string | null>(null)
+  const [hasKey, setHasKey] = useState<boolean | null>(null)
+  const [keyInput, setKeyInput] = useState('')
   const set = (patch: Partial<Settings>) => put('settings', { ...settings, ...patch })
 
   useEffect(() => {
     void bridge().info().then(setInfo)
+    void bridge().hasApiKey().then(setHasKey)
   }, [])
 
   let urlError: string | null = null
@@ -33,6 +36,42 @@ export function SettingsView() {
 
       <Section title="You">
         <TextField label="Your name" value={settings.userName} onChange={(v) => set({ userName: v })} hint="Used when you sign off a write-up." />
+      </Section>
+
+      <Section title="Company research (cloud)">
+        <p className="muted small">
+          Company research uses Claude ({'claude-opus-5-5'}) with web search, through your Anthropic API key. Only a company's name,
+          website and segment are sent, never your Context Pack, expert inputs or meeting notes. Each run costs roughly a few dollars
+          in API usage, depending on how much it reads. The key is stored in Scout's encrypted store and is never shown to the
+          interface again.
+        </p>
+        <div className="row">
+          <div className="grow">
+            <TextField type="password" label="Anthropic API key" value={keyInput} onChange={setKeyInput} placeholder={hasKey ? 'A key is set. Paste a new one to replace it.' : 'sk-ant-…'} />
+          </div>
+          <AsyncButton
+            className="primary"
+            disabled={!keyInput.trim()}
+            onClick={async () => {
+              await bridge().setApiKey(keyInput)
+              setKeyInput('')
+              setHasKey(await bridge().hasApiKey())
+            }}
+          >
+            Save key
+          </AsyncButton>
+          {hasKey && (
+            <AsyncButton
+              onClick={async () => {
+                await bridge().setApiKey('')
+                setHasKey(await bridge().hasApiKey())
+              }}
+            >
+              Remove key
+            </AsyncButton>
+          )}
+        </div>
+        {hasKey !== null && <Badge tone={hasKey ? 'good' : 'warn'}>{hasKey ? 'Research is ready' : 'No key set'}</Badge>}
       </Section>
 
       <Section title="Local model">

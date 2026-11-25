@@ -1,25 +1,14 @@
-import { PROFILE_FIELDS, SEGMENTS } from '@shared/catalog'
+import { SEGMENTS } from '@shared/catalog'
 import { CRITERION_BY_KEY, normaliseScores, weightedScore } from '@shared/rubric'
-import type { Company, Confidence, CriterionScore, HardCheck, ProfileFieldKey, Sourced } from '@shared/types'
-import { fieldFreshness, today, type Freshness } from '@shared/util'
-import { Badge, Empty, Section, Select, TextArea, TextField } from '../../components/ui'
+import type { Company, Confidence, CriterionScore, HardCheck } from '@shared/types'
+import { Badge, Empty, Section, Select, TextField } from '../../components/ui'
 import { useData, type EngagementCtx } from '../../data'
-
-const FRESH_BADGE: Record<Freshness, { tone: 'good' | 'warn' | 'bad' | 'neutral'; label: string }> = {
-  fresh: { tone: 'good', label: 'Checked' },
-  stale: { tone: 'warn', label: 'Older than 30 days' },
-  unverified: { tone: 'bad', label: 'No source' },
-  empty: { tone: 'neutral', label: 'Empty' }
-}
+import { CompanyProfile } from './CompanyProfile'
 
 export function ProfileTab({ ctx }: { ctx: EngagementCtx }) {
   const { put, pack } = useData()
   const { company, engagement } = ctx
   const setCompany = (patch: Partial<Company>) => put('companies', { ...company, ...patch })
-  const setField = (key: ProfileFieldKey, patch: Partial<Sourced>) => {
-    const prev = company.profile[key] ?? { value: '' }
-    setCompany({ profile: { ...company.profile, [key]: { ...prev, ...patch } } })
-  }
   const scores = normaliseScores(engagement.scores)
   const setScore = (i: number, patch: Partial<CriterionScore>) => {
     const next = scores.map((s, j) => (j === i ? { ...s, ...patch } : s))
@@ -27,7 +16,6 @@ export function ProfileTab({ ctx }: { ctx: EngagementCtx }) {
   }
   const ws = weightedScore(scores)
   const hard = pack.constraints.filter((c) => c.hard)
-  const flagged = PROFILE_FIELDS.filter((f) => ['stale', 'unverified'].includes(fieldFreshness(company.profile[f.key])))
 
   return (
     <>
@@ -40,39 +28,7 @@ export function ProfileTab({ ctx }: { ctx: EngagementCtx }) {
         <TextField label="Engagement owner" value={engagement.owner} onChange={(v) => put('engagements', { ...engagement, owner: v })} />
       </Section>
 
-      <Section
-        title="Profile"
-        actions={flagged.length > 0 ? <Badge tone="warn">{flagged.length} field(s) need a source or a fresh check</Badge> : <Badge tone="good">All filled fields are sourced</Badge>}
-      >
-        <p className="muted small">
-          Every field carries a source and the date it was checked. Fields with no source are shown as questions in the write-up,
-          not as facts.
-        </p>
-        {PROFILE_FIELDS.map((f) => {
-          const v = company.profile[f.key] ?? { value: '' }
-          const fr = FRESH_BADGE[fieldFreshness(v)]
-          return (
-            <div className="profile-field" key={f.key}>
-              <div className="row">
-                <span className="field-label grow">{f.label}</span>
-                <Badge tone={fr.tone}>{fr.label}</Badge>
-              </div>
-              {f.multiline ? (
-                <TextArea value={v.value} onChange={(x) => setField(f.key, { value: x })} rows={2} />
-              ) : (
-                <TextField value={v.value} onChange={(x) => setField(f.key, { value: x })} />
-              )}
-              <div className="row small">
-                <div className="grow">
-                  <TextField value={v.sourceUrl ?? ''} onChange={(x) => setField(f.key, { sourceUrl: x || undefined })} placeholder="Source URL" />
-                </div>
-                <TextField type="date" value={v.checkedAt ?? ''} onChange={(x) => setField(f.key, { checkedAt: x || undefined })} />
-                <button onClick={() => setField(f.key, { checkedAt: today() })}>Checked today</button>
-              </div>
-            </div>
-          )
-        })}
-      </Section>
+      <CompanyProfile company={company} />
 
       <Section title="Rubric scores" actions={<Badge tone="info">{ws.score != null ? `Weighted ${ws.score.toFixed(2)} / 5 over ${Math.round(ws.coverage * 100)}% of weight` : 'Not scored'}</Badge>}>
         <p className="muted small">

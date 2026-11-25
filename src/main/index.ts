@@ -5,6 +5,9 @@ import { defaultSettings, emptyContextPack, seedCompanies } from '../shared/seed
 import type { ChatMessage, Kind, Settings } from '../shared/types'
 import { markdownToDocx, markdownToPdf } from './exporters'
 import { Gateway } from './gateway'
+import { describeError, runResearch } from './research'
+import { researchRequestFor } from '../shared/research'
+import type { Company } from '../shared/types'
 import { loadOrCreateKey } from './keychain'
 import { Store, type StoredRecord } from './store'
 
@@ -105,6 +108,46 @@ function registerIpc(): void {
     store.backupTo(res.filePath)
     return res.filePath
   })
+
+  // Stage 1 research. The API key lives in the encrypted store under a kind the
+  // interface cannot read; the interface can only set it or ask whether one is set.
+  const SECRET = { kind: 'secrets', id: 'anthropic' }
+  const apiKey = () => store.get<{ id: string; apiKey: string }>(SECRET.kind, SECRET.id)?.apiKey || undefined
+  ipcMain.handle('secrets:setApiKey', (_e, key: string) => {
+    if (typeof key !== 'string') throw new Error('Invalid key')
+    if (key.trim()) store.put(SECRET.kind, { id: SECRET.id, apiKey: key.trim() })
+    else store.remove(SECRET.kind, SECRET.id)
+    store.flush()
+  })
+  ipcMain.handle('secrets:hasApiKey', () => !!apiKey() || !!process.env['ANTHROPIC_API_KEY'])
+
+  const running = new Map<string, AbortController>()
+  ipcMain.handle('research:run', async (e, companyId: string) => {
+    const company = store.get<Company>('companies', companyId)
+    if (!company) throw new Error('Company not found')
+    if (running.has(companyId)) throw new Error('Research is already running for this company')
+    const ctl = new AbortController()
+    running.set(companyId, ctl)
+    try {
+      const research = await runResearch(
+        apiKey(),
+        researchRequestFor(company),
+        (message) => e.sender.send('research:progress', { companyId, message }),
+        ctl.signal
+      )
+      // Re-read in case the scout edited the company while research ran.
+      const latest = store.get<Company>('companies', companyId) ?? company
+      const updated: Company = { ...latest, research, updatedAt: new Date().toISOString() }
+      store.put('companies', updated)
+      store.flush()
+      return updated
+    } catch (err) {
+      throw new Error(describeError(err))
+    } finally {
+      running.delete(companyId)
+    }
+  })
+  ipcMain.handle('research:cancel', (_e, companyId: string) => running.get(companyId)?.abort())
 
   ipcMain.handle('app:info', () => ({ dataPath: app.getPath('userData'), keychain, version: app.getVersion() }))
 

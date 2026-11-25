@@ -13,18 +13,44 @@ export const SEGMENTS = [
   'AI gateways and model routers'
 ]
 
-export const PROFILE_FIELDS: { key: ProfileFieldKey; label: string; multiline?: boolean }[] = [
-  { key: 'pitch', label: 'One-line pitch' },
-  { key: 'products', label: 'Products', multiline: true },
-  { key: 'deployment', label: 'Deployment options', multiline: true },
-  { key: 'targetCustomers', label: 'Target customers' },
-  { key: 'notableCustomers', label: 'Notable customers' },
-  { key: 'pricing', label: 'Pricing', multiline: true },
-  { key: 'funding', label: 'Funding and headcount' },
-  { key: 'localPresence', label: 'Local presence' },
-  { key: 'competitors', label: 'Competitors' },
-  { key: 'recentNews', label: 'Recent news', multiline: true },
-  { key: 'openQuestions', label: 'Open questions', multiline: true }
+export interface ProfileFieldDef {
+  key: ProfileFieldKey
+  label: string
+  group: string
+  multiline?: boolean
+  /** What the research agent should look for. */
+  guide: string
+}
+
+export const PROFILE_GROUPS = ['Overview', 'Products and market', 'Money', 'People', 'Ecosystem and dependencies', 'Risk and signals']
+
+export const PROFILE_FIELDS: ProfileFieldDef[] = [
+  { key: 'pitch', label: 'One-line pitch', group: 'Overview', guide: 'What the company does, in one sentence.' },
+  { key: 'companyType', label: 'Company type', group: 'Overview', guide: 'Public (with ticker), private start-up (with stage), private scale-up, or a product line of a larger company (name the parent).' },
+  { key: 'headquarters', label: 'Headquarters and offices', group: 'Overview', guide: 'HQ city and country, and main offices.' },
+  { key: 'founded', label: 'Founded', group: 'Overview', guide: 'Year founded, and for a product line, when it launched.' },
+  { key: 'headcount', label: 'Headcount and growth', group: 'Overview', guide: 'Approximate employees, recent growth or layoffs, with dates.' },
+  { key: 'products', label: 'Products', group: 'Products and market', multiline: true, guide: 'Main products relevant to AI platforms, with one line each.' },
+  { key: 'deployment', label: 'Deployment options', group: 'Products and market', multiline: true, guide: 'SaaS, VPC, on-premises, air-gapped; regions, especially Singapore or Southeast Asia.' },
+  { key: 'pricing', label: 'Pricing', group: 'Products and market', multiline: true, guide: 'Pricing model and any published prices.' },
+  { key: 'targetCustomers', label: 'Target customers', group: 'Products and market', guide: 'Who they sell to.' },
+  { key: 'notableCustomers', label: 'Notable customers', group: 'Products and market', multiline: true, guide: 'Named customers, especially in Singapore, Asia, government or regulated sectors.' },
+  { key: 'revenue', label: 'Revenue or ARR', group: 'Money', guide: 'Reported or credibly estimated revenue or ARR, with date and who reported it. For a product line, the parent\'s relevant segment.' },
+  { key: 'valuation', label: 'Valuation or market cap', group: 'Money', guide: 'Latest valuation (private) or market cap (public), with date.' },
+  { key: 'lastRound', label: 'Last funding round', group: 'Money', guide: 'For a start-up: the latest round, its stage, amount, date and lead investors. Otherwise say not applicable.' },
+  { key: 'funding', label: 'Total funding', group: 'Money', guide: 'Total raised to date and the history of rounds.' },
+  { key: 'investors', label: 'Key investors', group: 'Money', multiline: true, guide: 'Notable investors, including strategic investors such as cloud providers or chip makers.' },
+  { key: 'acquisitions', label: 'Acquisitions', group: 'Money', multiline: true, guide: 'Companies they acquired, or were acquired by, with dates.' },
+  { key: 'leadership', label: 'Leadership summary', group: 'People', multiline: true, guide: 'Founders and executives in brief; details go in the people list.' },
+  { key: 'talent', label: 'Talent signals', group: 'People', multiline: true, guide: 'Where founders and key hires came from (for example OpenAI, Anthropic, Google DeepMind, Meta AI), recent senior hires or departures, and hiring focus.' },
+  { key: 'partners', label: 'Main partners', group: 'Ecosystem and dependencies', multiline: true, guide: 'Technology, cloud, reseller and systems integrator partners, especially in Singapore or Asia.' },
+  { key: 'supplyChain', label: 'Supply-chain dependencies', group: 'Ecosystem and dependencies', multiline: true, guide: 'Who they depend on: cloud providers, GPU or chip suppliers, foundation model providers, data providers. Note any single points of failure or exposure to export controls.' },
+  { key: 'localPresence', label: 'Local presence', group: 'Ecosystem and dependencies', guide: 'Singapore or Southeast Asia office, team, data centre region or partners.' },
+  { key: 'certifications', label: 'Security certifications', group: 'Risk and signals', guide: 'SOC 2, ISO 27001, CSA STAR, MTCS (Singapore) and similar.' },
+  { key: 'competitors', label: 'Competitors', group: 'Risk and signals', guide: 'Main competitors.' },
+  { key: 'recentNews', label: 'Recent news', group: 'Risk and signals', multiline: true, guide: 'The most important news from the last 12 months, each with a date.' },
+  { key: 'risks', label: 'Risks and controversies', group: 'Risk and signals', multiline: true, guide: 'Lawsuits, security incidents, outages, regulatory action, financial distress or key departures.' },
+  { key: 'openQuestions', label: 'Open questions', group: 'Risk and signals', multiline: true, guide: 'What could not be confirmed from public sources and should be asked in the meeting.' }
 ]
 
 /** A profile field older than this is flagged as stale. */

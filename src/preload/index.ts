@@ -13,7 +13,16 @@ const api = {
     ipcRenderer.invoke('export:save', args),
   backup: () => ipcRenderer.invoke('app:backup'),
   info: () => ipcRenderer.invoke('app:info'),
-  openSource: (url: string) => ipcRenderer.invoke('shell:openSource', url)
+  openSource: (url: string) => ipcRenderer.invoke('shell:openSource', url),
+  setApiKey: (key: string) => ipcRenderer.invoke('secrets:setApiKey', key),
+  hasApiKey: () => ipcRenderer.invoke('secrets:hasApiKey'),
+  research: (companyId: string) => ipcRenderer.invoke('research:run', companyId),
+  cancelResearch: (companyId: string) => ipcRenderer.invoke('research:cancel', companyId),
+  onResearchProgress: (cb: (p: { companyId: string; message: string }) => void) => {
+    const handler = (_e: unknown, p: { companyId: string; message: string }) => cb(p)
+    ipcRenderer.on('research:progress', handler)
+    return () => ipcRenderer.removeListener('research:progress', handler)
+  }
 }
 
 contextBridge.exposeInMainWorld('scout', api)

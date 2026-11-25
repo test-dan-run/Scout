@@ -25,16 +25,66 @@ export interface Sourced {
 
 export type ProfileFieldKey =
   | 'pitch'
+  | 'companyType'
+  | 'headquarters'
+  | 'founded'
+  | 'headcount'
   | 'products'
   | 'deployment'
+  | 'pricing'
   | 'targetCustomers'
   | 'notableCustomers'
-  | 'pricing'
+  | 'revenue'
+  | 'valuation'
+  | 'lastRound'
   | 'funding'
+  | 'investors'
+  | 'acquisitions'
+  | 'leadership'
+  | 'talent'
+  | 'partners'
+  | 'supplyChain'
   | 'localPresence'
+  | 'certifications'
   | 'competitors'
   | 'recentNews'
+  | 'risks'
   | 'openQuestions'
+
+/** A founder, executive or notable hire, with where they worked before. */
+export interface Person {
+  name: string
+  role: string
+  background: string
+  /** Earlier employers worth noting, such as OpenAI, Anthropic or Google DeepMind. */
+  notablePriorOrgs: string[]
+  sourceUrl?: string
+}
+
+export type ResearchConfidence = 'low' | 'medium' | 'high'
+
+/** One field as the research agent found it, waiting for the scout to accept it. */
+export interface ResearchedField {
+  value: string
+  sources: string[]
+  /** As-of date the agent gave for the fact (YYYY-MM-DD or YYYY-MM), if any. */
+  asOf?: string
+  confidence: ResearchConfidence
+  /** Source URLs that did not appear in any page the agent actually searched or fetched. */
+  unseenSources: string[]
+  status: 'proposed' | 'accepted' | 'dismissed'
+}
+
+export interface CompanyResearch {
+  ranAt: string
+  model: string
+  summary: string
+  fields: Partial<Record<ProfileFieldKey, ResearchedField>>
+  people: (Person & { unseenSource?: boolean })[]
+  /** Every URL the agent searched or fetched during the run. */
+  pagesSeen: string[]
+  costNote?: string
+}
 
 export interface Company {
   id: Id
@@ -42,6 +92,10 @@ export interface Company {
   segment: string
   website?: string
   profile: Partial<Record<ProfileFieldKey, Sourced>>
+  /** Founders, executives and notable hires. */
+  people?: Person[]
+  /** The latest research run, kept so the scout can review and accept field by field. */
+  research?: CompanyResearch
   createdAt: string
   updatedAt: string
 }

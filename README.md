@@ -1,8 +1,8 @@
 # Scout
 
-Scout is a desktop app that takes one company from first look to a proceed or don't-proceed decision. This is **Phase 1: Prepare and Decide**, built from the approved design doc. It covers the first tech area, AI Platforms.
+Scout is a desktop app that takes one company from first look to a proceed or don't-proceed decision. This is **Phase 1: Prepare and Decide**, built from the approved design doc, plus the Stage 1 research agent pulled forward from Phase 2. It covers the first tech area, AI Platforms.
 
-Everything stays on your Mac. The store is encrypted, the interface cannot make network requests, and the optional AI help only talks to a model running locally.
+Everything you write stays on your Mac. The store is encrypted and the interface cannot make network requests. The only cloud call is company research, which sends a company's name, website and segment to Claude and nothing else.
 
 ## What Phase 1 does
 
@@ -10,7 +10,8 @@ Everything stays on your Mac. The store is encrypted, the interface cannot make 
 | --- | --- |
 | Workplace Context Pack | Write your team's mission, priorities, AI stack, pain points, constraints (with hard requirements) and problem statements once. Past engagements are added automatically on sign-off. |
 | Expert inputs | Paste an expert's email or chat message. Scout pulls out concerns and questions, and you confirm or discard each one. Tag it to one company or all of them. |
-| Companies | Manual company entry with the profile template. Every field has a source URL and a checked date, and fields with no source or older than 30 days are flagged. The three pilot companies (Azure AI Foundry, Databricks, LangChain) are pre-loaded with unverified starter facts to confirm. |
+| Companies | Add a company by name and website. The profile has 26 fields in six groups: overview (type, HQ, founded, headcount), products and market, money (revenue, valuation or market cap, last round, total funding, investors, acquisitions), people (leadership and talent signals), ecosystem and dependencies (partners, supply chain, local presence) and risk (certifications, competitors, news, controversies). A people list records founders, executives and notable hires and highlights anyone from frontier AI labs or big tech. Every field has a source URL and a checked date, and fields with no source or older than 30 days are flagged. The three pilot companies (Azure AI Foundry, Databricks, LangChain) are pre-loaded with unverified starter facts. |
+| Company research | One click runs Claude (`claude-opus-5-5`) with web search and web fetch. It proposes every profile field with its sources, an as-of date and a confidence level, plus a summary and the people list. Any source URL that never appeared in the agent's own searches or fetches is flagged as "not seen during research". You accept or dismiss each finding, or accept all findings that have a seen source. Accepted fields carry the source and research date into the write-up. |
 | Rubric | The fixed-weight AI Platforms rubric: score 1 to 5 with confidence, evidence and a source. Hard requirements from the Context Pack are checked per company. |
 | Fit map | Augmentation hypotheses in the form "if we used X for problem Y, we expect Z, measured by M". Accept, edit or reject each one. |
 | Question bank | Built from low-confidence rubric criteria, accepted hypotheses, confirmed expert concerns and the standard AI Platforms set. Each question has a priority, rubric and hypothesis links, what a good answer and a red flag look like, and follow-ups. Rebuilding only adds what is new, so your edits are kept. You can copy a list of open points to send to an expert. |
@@ -45,6 +46,12 @@ npm run build      # production build into out/
 npm run dist:mac   # build a .dmg (unsigned) into dist/
 ```
 
+## Company research
+
+Research needs an Anthropic API key. Add it in **Settings → Company research**. It is kept in the encrypted store, and the interface can only set it or check that it exists. If no key is saved, Scout uses `ANTHROPIC_API_KEY` from the environment.
+
+A run takes a few minutes and costs roughly a few dollars in API usage, depending on how much the agent reads. Only the company's name, website and segment are sent. If a safety classifier declines a request, the API retries it on a fallback model (`fallbacks: "default"`).
+
 ## Optional: a local model
 
 Scout works fully without a model, using built-in templates. A local model adds drafting help for expert inputs, hypotheses and the brief.
@@ -67,7 +74,7 @@ The gateway refuses any model address that is not `localhost`, `127.0.0.1` or `:
 src/
   shared/    domain logic with no Electron or React: types, rubric, question bank,
              brief, recommendation, write-up, Markdown, expert extraction, LLM prompts
-  main/      Electron main process: encrypted store, local model gateway, exports
+  main/      Electron main process: encrypted store, research agent, local model gateway, exports
   preload/   the narrow bridge the interface uses
   renderer/  React interface
 tests/       unit tests for shared logic, encryption and the store
@@ -76,7 +83,7 @@ tests/       unit tests for shared logic, encryption and the store
 ## Differences from the design doc
 
 - **Store encryption.** The doc says "SQLite plus files, encrypted at rest". Phase 1 encrypts the whole SQLite file with AES-256-GCM and a Keychain-held key rather than using SQLCipher, to avoid native builds. Audio and attachments arrive in Phase 3.
-- **No cloud model yet.** Stage 1 research (the only place a cloud model is allowed) is Phase 2, so Phase 1 makes no cloud calls at all.
+- **Research pulled forward.** The research agent from Phase 2 is included, because a rich, sourced profile matters most when preparing. Shortlisting and automatic rubric scoring are still Phase 2.
 - **Pilot companies.** The starter facts are general knowledge as of mid-2026 and carry no source, so they show as "No source" until you confirm them.
 
 ## Next phases
