@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "dist:mac": "electron-vite build && electron-builder --mac",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "node scripts/ensure-electron.cjs && electron-builder install-app-deps"
   },
   "license": "UNLICENSED",
   "dependencies": {

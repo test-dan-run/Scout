@@ -36,7 +36,7 @@ function settings(): Settings {
 
 async function openStore(): Promise<void> {
   const dir = app.getPath('userData')
-  const k = loadOrCreateKey(join(dir, 'scout.key'))
+  const k = await loadOrCreateKey(join(dir, 'scout.key'))
   keychain = k.keychain
   const wasmPath = require.resolve('sql.js/dist/sql-wasm.wasm')
   store = await Store.open(join(dir, 'scout.db.enc'), k.key, wasmPath)
